@@ -2,6 +2,8 @@
 
 Bu web uygulaması, yüklenen görselleri otomatik olarak 200KB boyutuna sıkıştırır. Görsel kalitesini mümkün olduğunca koruyarak boyutu küçültür.
 
+Site Linki -> https://two00kb-sikistirici.onrender.com
+
 ## Özellikler
 
 - Sürükle-bırak ile kolay görsel yükleme

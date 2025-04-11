@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>200KB Görsel Sıkıştırıcı</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>200KB Görsel Sıkıştırıcı</h1>
+        <div class="upload-container" id="dropZone">
+            <input type="file" id="fileInput" accept="image/*" hidden>
+            <div class="upload-content">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E" alt="Upload" class="upload-icon">
+                <p>Görseli buraya sürükleyin veya seçin</p>
+                <button class="upload-btn">Görsel Seç</button>
+            </div>
+        </div>
+        <div class="preview-container" id="previewContainer" style="display: none;">
+            <div class="image-preview">
+                <img id="previewImage" alt="Önizleme">
+            </div>
+            <div class="image-info">
+                <p>Orijinal Boyut: <span id="originalSize">0 KB</span></p>
+                <p>Yeni Boyut: <span id="newSize">0 KB</span></p>
+            </div>
+            <button id="downloadBtn" class="download-btn">Sıkıştırılmış Görseli İndir (Rastgele İsim)</button>
+        </div>
+    </div>
+
+    <!-- Custom Alert Dialog -->
+    <div id="customAlert" class="custom-alert">
+        <div class="custom-alert-content">
+            <h3>Dosya Adı</h3>
+            <p id="alertMessage"></p>
+            <button id="alertOkBtn" class="alert-btn">Tamam</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

@@ -48,4 +48,4 @@ Bu web uygulaması, yüklenen görselleri otomatik olarak 200KB boyutuna sıkı�
 
 ## Not
 
-Bu uygulama tamamen istemci tarafında çalışır ve görselleriniz sunucuya yüklenmez. Tüm işlemler tarayıcınızda gerçekleştirilir. 
+Bu uygulama tamamen istemci tarafında çalışır ve görselleriniz sunucuya yüklenmez. Tüm işlemler tarayıcınızda gerçekleştirilir.

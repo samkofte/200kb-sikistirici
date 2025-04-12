@@ -161,6 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw image on canvas
         ctx.drawImage(img, 0, 0);
 
+        // Target size in bytes (300KB)
+        const TARGET_SIZE = 300 * 1024;
+
         // Initial quality
         let quality = 0.9;
         let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -172,17 +175,56 @@ document.addEventListener('DOMContentLoaded', () => {
         let attempts = 0;
         const maxAttempts = 10;
 
-        while (compressedSize > 200 * 1024 && attempts < maxAttempts) {
+        // First compress to get close to target size
+        while (Math.abs(compressedSize - TARGET_SIZE) > 1024 && attempts < maxAttempts) {
             quality = (min + max) / 2;
             compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
             compressedSize = getBase64Size(compressedDataUrl);
 
-            if (compressedSize > 200 * 1024) {
+            if (compressedSize > TARGET_SIZE) {
                 max = quality;
             } else {
                 min = quality;
             }
             attempts++;
+        }
+
+        // If the compressed size is less than 300KB, add padding
+        if (compressedSize < TARGET_SIZE) {
+            // Convert base64 to binary array
+            const binaryString = atob(compressedDataUrl.split(',')[1]);
+            const binaryArray = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                binaryArray[i] = binaryString.charCodeAt(i);
+            }
+
+            // Calculate padding size
+            const paddingNeeded = TARGET_SIZE - compressedSize;
+            
+            // Create new array with padding space
+            const paddedArray = new Uint8Array(binaryArray.length + paddingNeeded + 4);
+            
+            // Copy original data
+            paddedArray.set(binaryArray);
+            
+            // Add JPEG comment marker (FF FE) and length
+            let position = binaryArray.length;
+            paddedArray[position++] = 0xFF;
+            paddedArray[position++] = 0xFE;
+            
+            // Fill remaining space with zeros
+            for (let i = position; i < paddedArray.length; i++) {
+                paddedArray[i] = 0;
+            }
+
+            // Convert back to base64
+            let binary = '';
+            for (let i = 0; i < paddedArray.length; i++) {
+                binary += String.fromCharCode(paddedArray[i]);
+            }
+            
+            compressedDataUrl = 'data:image/jpeg;base64,' + btoa(binary);
+            compressedSize = TARGET_SIZE;
         }
 
         // Update UI

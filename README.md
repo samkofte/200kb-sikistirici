@@ -1,12 +1,13 @@
 # 200kb-sikistirici
 
-Bu web uygulaması, yüklenen görselleri otomatik olarak 200KB boyutuna sıkıştırır. Görsel kalitesini mümkün olduğunca koruyarak boyutu küçültür.
+Bu web uygulaması, yüklenen görselleri tam olarak 300KB boyutuna dönüştürür. Görsel kalitesini mümkün olduğunca koruyarak boyutu ayarlar.
 
 ## Özellikler
 
 - Sürükle-bırak ile kolay görsel yükleme
-- Otomatik 200KB boyutuna sıkıştırma
-- Orijinal ve sıkıştırılmış boyut gösterimi
+- Her görseli tam olarak 300KB boyutuna dönüştürme
+- Küçük görseller için otomatik boyut tamamlama
+- Orijinal ve dönüştürülmüş boyut gösterimi
 - Görsel önizleme
 - Otomatik rastgele dosya adı oluşturma
 - Tek tıkla indirme

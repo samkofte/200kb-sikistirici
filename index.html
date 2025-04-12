@@ -5,41 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>200KB Görsel Sıkıştırıcı</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
+        <div class="app-header">
+            <h1>200KB Görsel Sıkıştırıcı</h1>
+            <p class="subtitle">Görsellerinizi otomatik olarak 200KB boyutuna sıkıştırın</p>
+        </div>
+
         <div class="upload-area" id="dropZone">
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            <button class="upload-btn">Görsel Seç veya Sürükle Bırak</button>
+            <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <button class="upload-btn">
+                <i class="fas fa-image"></i>
+                Görsel Seç veya Sürükle Bırak
+            </button>
+            <p class="upload-info">PNG, JPG veya JPEG (Max: 1920x1920px)</p>
         </div>
-        
+
         <div class="dimension-controls">
             <div class="dimension-input">
-                <label for="imageWidth">Genişlik (px):</label>
+                <label for="imageWidth">
+                    <i class="fas fa-arrows-left-right"></i>
+                    Genişlik (px)
+                </label>
                 <input type="number" id="imageWidth" min="1" max="1920" placeholder="Genişlik">
             </div>
             <div class="dimension-input">
-                <label for="imageHeight">Yükseklik (px):</label>
+                <label for="imageHeight">
+                    <i class="fas fa-arrows-up-down"></i>
+                    Yükseklik (px)
+                </label>
                 <input type="number" id="imageHeight" min="1" max="1920" placeholder="Yükseklik">
             </div>
         </div>
 
         <div class="preview-container" id="previewContainer" style="display: none;">
-            <img id="previewImage" alt="Önizleme">
-            <div class="size-info">
-                <p>Orijinal Boyut: <span id="originalSize">0 KB</span></p>
-                <p>Yeni Boyut: <span id="newSize">0 KB</span></p>
+            <div class="preview-header">
+                <h2>Önizleme</h2>
+                <div class="size-info-container">
+                    <div class="size-info-item">
+                        <i class="fas fa-file"></i>
+                        Orijinal: <span id="originalSize">0 KB</span>
+                    </div>
+                    <div class="size-info-item">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                        Yeni: <span id="newSize">0 KB</span>
+                    </div>
+                </div>
             </div>
-            <button id="downloadBtn" class="download-btn">Görseli İndir</button>
-        </div>
-
-        <div class="custom-alert" id="customAlert">
-            <div class="alert-content">
-                <p id="alertMessage"></p>
-                <button id="alertOkBtn">Tamam</button>
+            <div class="image-preview-wrapper">
+                <img id="previewImage" alt="Önizleme">
             </div>
+            <button class="download-btn" id="downloadBtn">
+                <i class="fas fa-download"></i>
+                İndir
+            </button>
         </div>
     </div>
+
+    <div class="custom-alert" id="customAlert">
+        <div class="alert-content">
+            <i class="fas fa-exclamation-circle"></i>
+            <p id="alertMessage"></p>
+            <button id="alertOkBtn">Tamam</button>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>Geliştirici: <a href="https://github.com/samkofte" target="_blank">@samkofte</a></p>
+    </footer>
 
     <script src="script.js"></script>
 </body>

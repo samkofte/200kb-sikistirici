@@ -148,6 +148,12 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.1);
 }
 
+.dimension-input input::-webkit-inner-spin-button,
+.dimension-input input::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 24px;
+}
+
 .preview-container {
     background: white;
     border-radius: var(--border-radius);

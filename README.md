@@ -2,6 +2,8 @@
 
 Bu web uygulaması, yüklenen görselleri tam olarak 300KB boyutuna dönüştürür. Görsel kalitesini mümkün olduğunca koruyarak boyutu ayarlar.
 
+Site Linki -> https://two00kb-sikistirici.onrender.com
+
 ## Özellikler
 
 - Sürükle-bırak ile kolay görsel yükleme

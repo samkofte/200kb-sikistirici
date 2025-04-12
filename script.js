@@ -10,270 +10,227 @@ document.addEventListener('DOMContentLoaded', () => {
     const customAlert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
     const alertOkBtn = document.getElementById('alertOkBtn');
-
-    // Güvenlik ayarları
-    const securitySettings = {
-        maxFileSize: 20 * 1024 * 1024, // 20MB maksimum dosya boyutu
-        allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'],
-        maxWidth: 8000, // Maksimum görsel genişliği
-        maxHeight: 8000, // Maksimum görsel yüksekliği
-        minWidth: 50, // Minimum görsel genişliği
-        minHeight: 50, // Minimum görsel yüksekliği
-    };
+    const imageWidth = document.getElementById('imageWidth');
+    const imageHeight = document.getElementById('imageHeight');
 
     let compressedImage = null;
     let originalFileName = '';
-    let pendingDownload = null;
+    let currentImage = null;
+    let isResizing = false;
 
-    // Custom alert function
-    function showCustomAlert(message, callback) {
-        alertMessage.textContent = message;
-        customAlert.classList.add('show');
-        
-        alertOkBtn.onclick = () => {
-            customAlert.classList.remove('show');
-            if (callback) callback();
+    // Input değişikliklerini dinle
+    imageWidth.addEventListener('input', debounce(handleDimensionChange, 500));
+    imageHeight.addEventListener('input', debounce(handleDimensionChange, 500));
+
+    // Debounce fonksiyonu
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
         };
     }
 
-    // Güvenlik kontrolleri
-    function validateFile(file) {
-        // Dosya tipi kontrolü
-        if (!securitySettings.allowedTypes.includes(file.type)) {
-            throw new Error('Desteklenmeyen dosya formatı. Lütfen JPEG, PNG, GIF, WEBP veya BMP formatında bir görsel yükleyin.');
+    // Boyut değişikliklerini handle et
+    function handleDimensionChange() {
+        if (!currentImage || isResizing) return;
+
+        const newWidth = parseInt(imageWidth.value);
+        const newHeight = parseInt(imageHeight.value);
+
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 1 || newHeight < 1) {
+            return;
         }
 
-        // Dosya boyutu kontrolü
-        if (file.size > securitySettings.maxFileSize) {
-            throw new Error(`Dosya boyutu çok büyük. Maksimum dosya boyutu: ${formatFileSize(securitySettings.maxFileSize)}`);
+        if (newWidth > 1920 || newHeight > 1920) {
+            showCustomAlert('Maksimum boyut 1920x1920 pikseldir.');
+            // Önceki değerlere geri dön
+            imageWidth.value = Math.min(currentImage.width, 1920);
+            imageHeight.value = Math.min(currentImage.height, 1920);
+            return;
         }
 
-        return true;
+        isResizing = true;
+        resizeAndCompress(newWidth, newHeight, currentImage, getBase64Size(currentImage.src));
+        isResizing = false;
     }
 
-    // Görsel boyutlarını kontrol et
-    function validateImageDimensions(img) {
-        return new Promise((resolve, reject) => {
-            if (img.width > securitySettings.maxWidth || img.height > securitySettings.maxHeight) {
-                reject(new Error(`Görsel boyutları çok büyük. Maksimum boyutlar: ${securitySettings.maxWidth}x${securitySettings.maxHeight}px`));
-            }
-            if (img.width < securitySettings.minWidth || img.height < securitySettings.minHeight) {
-                reject(new Error(`Görsel boyutları çok küçük. Minimum boyutlar: ${securitySettings.minWidth}x${securitySettings.minHeight}px`));
-            }
-            resolve(true);
-        });
+    // Custom alert function
+    function showCustomAlert(message) {
+        alertMessage.textContent = message;
+        customAlert.classList.add('show');
+        alertOkBtn.onclick = () => customAlert.classList.remove('show');
     }
 
-    // Dosya adını temizle ve güvenli hale getir
+    // Dosya adını temizle
     function sanitizeFileName(fileName) {
-        // Uzantıyı kaldır
         let name = fileName.replace(/\.[^/.]+$/, "");
-        
-        // Windows'da yasaklı olan karakterleri temizle
         name = name.replace(/[<>:"/\\|?*]/g, '');
-        
-        // Maksimum uzunluğu kontrol et
         name = name.substring(0, 100);
-        
-        // Boş string kontrolü
-        if (!name.trim()) {
-            name = 'gorsel';
-        }
-        
-        return name;
+        return name || 'gorsel';
     }
 
     // Drag and drop handlers
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        dropZone.style.borderColor = '#007bff';
+        dropZone.classList.add('drag-over');
     });
 
     dropZone.addEventListener('dragleave', (e) => {
         e.preventDefault();
-        dropZone.style.borderColor = '#ccc';
+        dropZone.classList.remove('drag-over');
     });
 
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
-        dropZone.style.borderColor = '#ccc';
+        dropZone.classList.remove('drag-over');
         const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFile(files[0]);
-        }
+        if (files.length > 0) handleFile(files[0]);
     });
 
     // Click to upload
-    uploadBtn.addEventListener('click', () => {
-        fileInput.click();
-    });
-
+    uploadBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleFile(e.target.files[0]);
-        }
+        if (e.target.files.length > 0) handleFile(e.target.files[0]);
     });
 
     // Handle file upload
     function handleFile(file) {
-        try {
-            // Dosya güvenlik kontrollerini yap
-            validateFile(file);
-
-            // Dosya adını temizle ve güvenli hale getir
-            originalFileName = sanitizeFileName(file.name);
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = async () => {
-                    try {
-                        // Görsel boyutlarını kontrol et
-                        await validateImageDimensions(img);
-                        compressImage(img, file.size);
-                    } catch (error) {
-                        showCustomAlert(error.message);
-                    }
-                };
-                img.onerror = () => {
-                    showCustomAlert('Görsel yüklenirken bir hata oluştu. Lütfen geçerli bir görsel dosyası yükleyin.');
-                };
-                img.src = e.target.result;
-            };
-            reader.onerror = () => {
-                showCustomAlert('Dosya okuma hatası. Lütfen tekrar deneyin.');
-            };
-            reader.readAsDataURL(file);
-        } catch (error) {
-            showCustomAlert(error.message);
+        if (!file.type.startsWith('image/')) {
+            showCustomAlert('Lütfen bir görsel dosyası yükleyin.');
+            return;
         }
+
+        originalFileName = sanitizeFileName(file.name);
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => processImage(img, file.size);
+            img.onerror = () => showCustomAlert('Görsel yüklenirken hata oluştu.');
+            img.src = e.target.result;
+        };
+        
+        reader.onerror = () => showCustomAlert('Dosya okuma hatası.');
+        reader.readAsDataURL(file);
     }
 
-    // Compress image
-    function compressImage(img, originalFileSize) {
+    function processImage(img, originalFileSize) {
+        currentImage = img;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = img.width;
+        let height = img.height;
+        
+        // Update dimension inputs with original values
+        isResizing = true; // Prevent auto-update loop
+        imageWidth.value = Math.min(width, 1920);
+        imageHeight.value = Math.min(height, 1920);
+        isResizing = false;
+        
+        // Maksimum boyut 1920x1920
+        const maxSize = 1920;
+        if (width > maxSize || height > maxSize) {
+            if (width > height) {
+                height = Math.round(height * (maxSize / width));
+                width = maxSize;
+            } else {
+                width = Math.round(width * (maxSize / height));
+                height = maxSize;
+            }
+        }
+
+        resizeAndCompress(width, height, img, originalFileSize);
+    }
+
+    function resizeAndCompress(width, height, img, originalFileSize) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
-        // Set canvas dimensions to match image
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
 
-        // Draw image on canvas
-        ctx.drawImage(img, 0, 0);
+        // 300KB hedef boyutu
+        const targetSize = 300 * 1024;
+        let quality = 0.95;
+        let compressedDataUrl;
+        let currentSize;
 
-        // Target size in bytes (300KB)
-        const TARGET_SIZE = 300 * 1024;
-
-        // Initial quality
-        let quality = 0.9;
-        let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        let compressedSize = getBase64Size(compressedDataUrl);
-
-        // Binary search to find the right quality
+        // Binary search ile kaliteyi ayarla
         let min = 0;
         let max = 1;
         let attempts = 0;
         const maxAttempts = 10;
 
-        // First compress to get close to target size
-        while (Math.abs(compressedSize - TARGET_SIZE) > 1024 && attempts < maxAttempts) {
+        do {
             quality = (min + max) / 2;
             compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-            compressedSize = getBase64Size(compressedDataUrl);
+            currentSize = getBase64Size(compressedDataUrl);
 
-            if (compressedSize > TARGET_SIZE) {
+            if (currentSize > targetSize) {
                 max = quality;
             } else {
                 min = quality;
             }
+
             attempts++;
+        } while (Math.abs(currentSize - targetSize) > 1024 && attempts < maxAttempts);
+
+        // Eğer boyut hala 300KB'den küçükse, padding ekle
+        if (currentSize < targetSize) {
+            const binary = atob(compressedDataUrl.split(',')[1]);
+            const paddingNeeded = targetSize - currentSize;
+            const paddingData = new Uint8Array(paddingNeeded);
+            let paddedBinary = binary;
+            
+            // JPEG yorum markörü ekle (FF FE)
+            paddedBinary += String.fromCharCode(0xFF, 0xFE);
+            
+            // Padding ekle
+            for (let i = 0; i < paddingNeeded; i++) {
+                paddedBinary += String.fromCharCode(paddingData[i]);
+            }
+            
+            compressedDataUrl = 'data:image/jpeg;base64,' + btoa(paddedBinary);
+            currentSize = targetSize;
         }
 
-        // If the compressed size is less than 300KB, add padding
-        if (compressedSize < TARGET_SIZE) {
-            // Convert base64 to binary array
-            const binaryString = atob(compressedDataUrl.split(',')[1]);
-            const binaryArray = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                binaryArray[i] = binaryString.charCodeAt(i);
-            }
-
-            // Calculate padding size
-            const paddingNeeded = TARGET_SIZE - compressedSize;
-            
-            // Create new array with padding space
-            const paddedArray = new Uint8Array(binaryArray.length + paddingNeeded + 4);
-            
-            // Copy original data
-            paddedArray.set(binaryArray);
-            
-            // Add JPEG comment marker (FF FE) and length
-            let position = binaryArray.length;
-            paddedArray[position++] = 0xFF;
-            paddedArray[position++] = 0xFE;
-            
-            // Fill remaining space with zeros
-            for (let i = position; i < paddedArray.length; i++) {
-                paddedArray[i] = 0;
-            }
-
-            // Convert back to base64
-            let binary = '';
-            for (let i = 0; i < paddedArray.length; i++) {
-                binary += String.fromCharCode(paddedArray[i]);
-            }
-            
-            compressedDataUrl = 'data:image/jpeg;base64,' + btoa(binary);
-            compressedSize = TARGET_SIZE;
-        }
-
-        // Update UI
+        // Önizleme ve boyut bilgilerini güncelle
         previewImage.src = compressedDataUrl;
         originalSize.textContent = formatFileSize(originalFileSize);
-        newSize.textContent = formatFileSize(compressedSize);
+        newSize.textContent = formatFileSize(currentSize);
         previewContainer.style.display = 'block';
         compressedImage = compressedDataUrl;
     }
 
     // Calculate base64 string size
     function getBase64Size(base64String) {
-        const padding = base64String.endsWith('==') ? 2 : 1;
-        return (base64String.length * 3) / 4 - padding;
+        const padding = base64String.endsWith('==') ? 2 : base64String.endsWith('=') ? 1 : 0;
+        return Math.floor((base64String.length * 3) / 4) - padding;
     }
 
     // Format file size
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const sizes = ['Bytes', 'KB', 'MB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    // Generate random string of specified length
-    function generateRandomString(length) {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        return result;
-    }
-
-    // Download compressed image
+    // Download handler
     downloadBtn.addEventListener('click', () => {
         if (compressedImage) {
-            // Generate random 4-character string
-            const randomString = generateRandomString(4);
-            const newFileName = originalFileName + '-' + randomString + '.jpg';
-            
-            // Show custom alert with the new filename
-            showCustomAlert('Dosya adı: ' + newFileName, () => {
-                const link = document.createElement('a');
-                link.download = newFileName;
-                link.href = compressedImage;
-                link.click();
-            });
+            const link = document.createElement('a');
+            link.download = originalFileName + '_300kb.jpg';
+            link.href = compressedImage;
+            link.click();
         }
     });
 }); 
